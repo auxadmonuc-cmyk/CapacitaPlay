@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with roles, positions, and gamification statistics.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique authentication identifier." },
+        "nombre": { "type": "string", "description": "Full name of the worker." },
+        "email": { "type": "string", "format": "email", "description": "Email address of the worker." },
+        "rol": { "type": "string", "enum": ["trabajador", "administrador"], "description": "System role." },
+        "puesto": { "type": "string", "description": "Job position or department." },
+        "totalXP": { "type": "integer", "description": "Total Experience Points accumulated." },
+        "gamesPlayed": { "type": "integer", "description": "Total number of games played." },
+        "quizHighScore": { "type": "integer", "description": "Lifetime high score in the Quiz game." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Date of account creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Date of last update." }
+      },
+      "required": ["uid", "nombre", "email", "rol", "totalXP", "gamesPlayed", "createdAt"]
+    },
+    "Pregunta": {
+      "title": "Quiz Question",
+      "description": "A quiz question for corporate training.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the question." },
+        "pregunta": { "type": "string", "description": "The question text." },
+        "opciones": { "type": "array", "description": "Array of 4 answer options." },
+        "respuestaCorrecta": { "type": "integer", "description": "Index of the correct answer (0-3)." },
+        "categoria": { "type": "string", "description": "Training category (e.g., Security, Culture, Processes)." },
+        "puntos": { "type": "integer", "description": "Points/XP awarded for correct answer." },
+        "createdBy": { "type": "string", "description": "User ID of creator (admin)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Date created." }
+      },
+      "required": ["id", "pregunta", "opciones", "respuestaCorrecta", "categoria", "puntos", "createdBy"]
+    },
+    "Resultado": {
+      "title": "Game Session Result",
+      "description": "A record of a completed training game session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the result entry." },
+        "userId": { "type": "string", "description": "User ID who played the game." },
+        "userName": { "type": "string", "description": "Name of the player." },
+        "gameId": { "type": "string", "description": "Game type identifier (e.g., quiz_people)." },
+        "score": { "type": "integer", "description": "Points scored." },
+        "xpGained": { "type": "integer", "description": "XP gained from this game session." },
+        "correctAnswers": { "type": "integer", "description": "Number of correct answers." },
+        "totalQuestions": { "type": "integer", "description": "Total questions in the quiz." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Session timestamp." }
+      },
+      "required": ["id", "userId", "userName", "gameId", "score", "xpGained", "createdAt"]
+    },
+    "Ranking": {
+      "title": "Ranking Entry",
+      "description": "Leaderboard snapshots or high score summaries.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User identifier." },
+        "userName": { "type": "string", "description": "User name shown on the board." },
+        "puesto": { "type": "string", "description": "Job position." },
+        "totalXP": { "type": "integer", "description": "Aggregated XP." },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
+      },
+      "required": ["userId", "userName", "totalXP", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "usuarios/{userId}": {
+      "schema": "User",
+      "description": "User profiles with personalized progress and scores."
+    },
+    "preguntas/{preguntaId}": {
+      "schema": "Pregunta",
+      "description": "Corporate training questions managed by administrators."
+    },
+    "resultados/{resultadoId}": {
+      "schema": "Resultado",
+      "description": "Logged metrics of completed worker training games."
+    },
+    "ranking/{userId}": {
+      "schema": "Ranking",
+      "description": "Consolidated ranking list for the corporate scoreboard."
+    }
+  }
+}

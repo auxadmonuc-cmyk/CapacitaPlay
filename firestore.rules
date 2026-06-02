@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Catch-all Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Role Lookup: check if the user's document has roles
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
+    // Incoming & Existing helpers
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+             data.nombre is string && data.nombre.size() > 0 && data.nombre.size() <= 100 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.rol is string && (data.rol == 'trabajador' || data.rol == 'administrador') &&
+             (data.puesto == null || (data.puesto is string && data.puesto.size() <= 100)) &&
+             data.totalXP is int && data.totalXP >= 0 && data.totalXP <= 1000000 &&
+             data.gamesPlayed is int && data.gamesPlayed >= 0 && data.gamesPlayed <= 50000 &&
+             (data.quizHighScore == null || (data.quizHighScore is int && data.quizHighScore >= 0));
+    }
+
+    function isValidPregunta(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.pregunta is string && data.pregunta.size() > 0 && data.pregunta.size() <= 300 &&
+             data.opciones is list && data.opciones.size() == 4 &&
+             data.opciones[0] is string && data.opciones[0].size() <= 150 &&
+             data.opciones[1] is string && data.opciones[1].size() <= 150 &&
+             data.opciones[2] is string && data.opciones[2].size() <= 150 &&
+             data.opciones[3] is string && data.opciones[3].size() <= 150 &&
+             data.respuestaCorrecta is int && data.respuestaCorrecta >= 0 && data.respuestaCorrecta <= 3 &&
+             data.categoria is string && data.categoria.size() <= 50 &&
+             data.puntos is int && data.puntos >= 0 && data.puntos <= 500 &&
+             data.createdBy is string && data.createdBy.size() <= 128;
+    }
+
+    function isValidResultado(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.userName is string && data.userName.size() <= 100 &&
+             data.gameId is string && (data.gameId == 'quiz_people' || data.gameId == 'memoria' || data.gameId == 'ruleta' || data.gameId == 'sopa_letras' || data.gameId == 'crucigrama') &&
+             data.score is int && data.score >= 0 && data.score <= 100000 &&
+             data.xpGained is int && data.xpGained >= 0 && data.xpGained <= 5000 &&
+             data.correctAnswers is int && data.correctAnswers >= 0 &&
+             data.totalQuestions is int && data.totalQuestions >= 0;
+    }
+
+    function isValidRanking(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 100 &&
+             (data.puesto == null || (data.puesto is string && data.puesto.size() <= 100)) &&
+             data.totalXP is int && data.totalXP >= 0 && data.totalXP <= 1000000;
+    }
+
+
+    // --- Collection Routes & Access Rules ---
+
+    // 1. Usuarios
+    match /usuarios/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().rol == 'trabajador'; // Can only self-register as standard worker
+      allow update: if isSignedIn() && (
+        // Overrides by system or admin
+        isAdmin() || 
+        // Self Updates: can only adjust stats and details, and cannot escalate their own role
+        (isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().rol == existing().rol)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 2. Preguntas
+    match /preguntas/{preguntaId} {
+      allow read: if isSignedIn();
+      allow write, delete: if isAdmin() && isValidId(preguntaId);
+    }
+
+    // 2.1 Juegos
+    match /juegos/{juegoId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() && isValidId(juegoId) && incoming().titulo is string && incoming().descripcion is string && incoming().activo is bool && incoming().createdBy is string;
+    }
+
+    // 3. Resultados
+    match /resultados/{resultadoId} {
+      allow read: if isSignedIn();
+      // Write-once result records (submissions from games)
+      allow create: if isSignedIn() && isValidId(resultadoId) && isValidResultado(incoming());
+      // Absolutely no modifications or deletions of historical scores!
+      allow update, delete: if false; 
+    }
+
+    // 4. Ranking
+    match /ranking/{userId} {
+      allow read: if isSignedIn();
+      // Users can update their own scoreboard summary when they gain XP
+      allow create, update: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidRanking(incoming());
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Entrenamiento Gamificado para Trabajadores",
+  "description": "Una plataforma interactiva y gamificada estilo Duolingo/Kahoot orientada al entrenamiento corporativo, con registro, módulo de Quiz, resultados detallados y ranking de puntuaciones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
