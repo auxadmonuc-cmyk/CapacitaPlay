@@ -6,7 +6,8 @@ import jsonConfig from '../firebase-applet-config.json';
 // Prefer Vite env vars (VITE_*) injected at build time. Fall back to
 // `firebase-applet-config.json` if present. If neither is available,
 // treat as mock mode.
-const env = import.meta.env as Record<string, any>;
+const env = (import.meta as any).env as Record<string, any>;
+
 
 const firebaseConfigFromEnv = {
   apiKey: env.VITE_FIREBASE_API_KEY ?? '',

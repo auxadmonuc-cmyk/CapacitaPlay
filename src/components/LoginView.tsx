@@ -3,7 +3,7 @@ import { ActiveView, UserProfile } from '../types';
 import { loginUserEmail, loginWithGoogle, sendPasswordRecoveryEmail } from '../services/store';
 import { translateFirebaseError } from '../services/errorHandler';
 import { motion } from 'motion/react';
-import { Key, Mail, Brain, AlertCircle, Sparkles, LogIn, ChevronRight } from 'lucide-react';
+import { Key, Mail, Brain, AlertCircle, LogIn } from 'lucide-react';
 
 interface LoginViewProps {
   setView: (view: ActiveView) => void;
@@ -56,6 +56,7 @@ export default function LoginView({ setView, setUser }: LoginViewProps) {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
+
     try {
       const profile = await loginWithGoogle();
       setUser(profile);
@@ -68,45 +69,27 @@ export default function LoginView({ setView, setUser }: LoginViewProps) {
     }
   };
 
-  // Helper for quick testing of pre-seeded characters (highly appreciated for evaluation)
-  const quickTestLogin = async (type: 'trabajador' | 'administrador') => {
-    setLoading(true);
-    setError(null);
-    const targetEmail = type === 'administrador' ? 'paula.n@empresa.com' : 'sofia.j@empresa.com';
-    try {
-      // In mock DB, those profiles exist, we can use quick credentials
-      const profile = await loginUserEmail(targetEmail, 'password123'); // any password matches preseed
-      setUser(profile);
-      setView('dashboard');
-    } catch (err: any) {
-      const friendlyError = translateFirebaseError(err);
-      setError(friendlyError);
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
     <div className="mx-auto max-w-md px-4 py-12" id="login-view">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-3xl border-2 border-gray-200 bg-white p-8 shadow-sm"
       >
-        {/* Header Icon */}
         <div className="flex flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
             <Brain className="h-6 w-6" id="login-header-icon" />
           </div>
-          <h2 className="mt-4 text-2xl font-black text-gray-850">Bienvenido de Vuelta</h2>
+
+          <h2 className="mt-4 text-2xl font-black text-gray-850">
+            Bienvenido de Vuelta
+          </h2>
+
           <p className="mt-1.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
             Ingresa para continuar tu entrenamiento
           </p>
-          <p className="mt-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest px-4">
-            Se envió un enlace de verificación a tu correo. Puedes iniciar sesión aunque aún no hayas confirmado el email.
-          </p>
         </div>
 
-        {/* Action Panel Errors */}
         {error && (
           <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-red-50 p-3.5 text-xs font-bold text-red-800 border border-red-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
@@ -121,90 +104,115 @@ export default function LoginView({ setView, setUser }: LoginViewProps) {
           </div>
         )}
 
-        {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1">
               Correo Electrónico
             </label>
+
             <div className="relative rounded-2xl">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                 <Mail className="h-4 w-4" />
               </div>
+
               <input
                 id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colaborador@empresa.com"
-                className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:bg-white focus:outline-hidden transition-all font-bold"
+                className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all font-bold"
                 required
               />
             </div>
           </div>
 
-          {forgotMode ? null : (
+          {!forgotMode && (
             <div>
               <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1">
                 Contraseña
               </label>
+
               <div className="relative rounded-2xl">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                   <Key className="h-4 w-4" />
                 </div>
+
                 <input
                   id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-55/35 py-3 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:bg-white focus:outline-hidden transition-all font-bold"
+                  className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all font-bold"
                   required={!forgotMode}
                 />
               </div>
             </div>
           )}
 
-          {/* Submit Action */}
           <button
             id="login-submit-btn"
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3 text-sm font-black text-white hover:bg-indigo-500 border-b-4 border-indigo-800 disabled:opacity-50 active:transform active:translate-y-0.5 transition-all cursor-pointer uppercase tracking-wider"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3 text-sm font-black text-white hover:bg-indigo-500 border-b-4 border-indigo-800 disabled:opacity-50 active:translate-y-0.5 transition-all cursor-pointer uppercase tracking-wider"
           >
-            {loading ? (forgotMode ? 'Enviando correo...' : 'Cargando sesión...') : (forgotMode ? 'Enviar enlace de recuperación' : 'Iniciar Sesión')}
+            {loading
+              ? forgotMode
+                ? 'Enviando correo...'
+                : 'Cargando sesión...'
+              : forgotMode
+              ? 'Enviar enlace de recuperación'
+              : 'Iniciar Sesión'}
+
             <LogIn className="h-4 w-4" />
           </button>
         </form>
 
         <div className="mt-3 text-center text-xs font-bold uppercase tracking-wide text-indigo-600">
           {forgotMode ? (
-            <button type="button" onClick={() => { setForgotMode(false); setError(null); setInfo(null); }} className="underline">
+            <button
+              type="button"
+              onClick={() => {
+                setForgotMode(false);
+                setError(null);
+                setInfo(null);
+              }}
+              className="underline"
+            >
               Volver al inicio de sesión
             </button>
           ) : (
-            <button type="button" onClick={() => { setForgotMode(true); setError(null); setInfo(null); }} className="underline">
+            <button
+              type="button"
+              onClick={() => {
+                setForgotMode(true);
+                setError(null);
+                setInfo(null);
+              }}
+              className="underline"
+            >
               ¿Olvidaste tu contraseña?
             </button>
           )}
         </div>
 
-        {/* Divider */}
         <div className="relative mt-6 flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+            <div className="w-full border-t border-gray-200" />
           </div>
+
           <span className="relative bg-white px-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
             o iniciar con
           </span>
         </div>
 
-        {/* Google Authentication popup button */}
         <button
           id="google-signin-btn"
+          type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl border-2 border-gray-200 bg-white py-2.5 text-xs font-black text-gray-700 hover:bg-gray-50 active:transform active:translate-y-0.5 transition-all cursor-pointer uppercase tracking-wider"
+          className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl border-2 border-gray-200 bg-white py-2.5 text-xs font-black text-gray-700 hover:bg-gray-50 active:translate-y-0.5 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -212,50 +220,21 @@ export default function LoginView({ setView, setUser }: LoginViewProps) {
               d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114A5.516 5.516 0 0 1 8.5 13a5.516 5.516 0 0 1 5.491-5.514c1.47 0 2.805.577 3.82 1.506l3.117-3.117A9.873 9.873 0 0 0 13.991 3C8.473 3 4 7.473 4 13s4.473 10 9.991 10c5.765 0 9.85-4.054 9.85-10 0-.618-.054-1.218-.163-1.715H12.24Z"
             />
           </svg>
+
           Google Workspace
         </button>
 
-        {/* Navigation Link */}
         <p className="mt-8 text-center text-xs text-gray-400 font-bold uppercase tracking-wide">
           ¿No tienes una cuenta aún?{' '}
           <button
             id="register-redirect-btn"
+            type="button"
             onClick={() => setView('register')}
             className="font-black text-indigo-600 hover:underline cursor-pointer"
           >
             Regístrate aquí
           </button>
         </p>
-
-        {/* Sandbox Quick-Test Block for Easy Checking */}
-        <div className="mt-8 rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-4">
-          <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 uppercase tracking-wide">
-            <Sparkles className="h-4 w-4 text-indigo-600" />
-            <span>Acceso Demo de Prueba</span>
-          </div>
-          <p className="mt-1 text-[10px] text-gray-400 font-bold leading-normal">
-            Usa estas cuentas de demostración pre-cargadas para revisar las vistas rápidamente sin registrarte:
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => quickTestLogin('trabajador')}
-              className="flex items-center justify-center gap-1 rounded-xl bg-indigo-50 border border-indigo-200 px-2 py-2 text-[10px] font-black text-indigo-700 hover:bg-indigo-150 transition-all uppercase tracking-wide cursor-pointer"
-            >
-              Demo Trabajador
-              <ChevronRight className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => quickTestLogin('administrador')}
-              className="flex items-center justify-center gap-1 rounded-xl bg-purple-50 border border-purple-200 px-2 py-2 text-[10px] font-black text-purple-700 hover:bg-purple-150 transition-all uppercase tracking-wide cursor-pointer"
-            >
-              Demo Admin
-              <ChevronRight className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-
       </motion.div>
     </div>
   );

@@ -652,7 +652,8 @@ export async function getUserGameAttemptsThisWeek(userId: string, gameId: string
   const sevenDaysAgoISO = sevenDaysAgo.toISOString();
 
   if (isMockFirebase) {
-    const results = mockDB.getGameResults();
+    const results = mockDB.getResults();
+
     return results.filter(
       (r) =>
         r.userId === userId &&
